@@ -1,6 +1,7 @@
 import { useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';
 import { FieldValues } from 'react-hook-form';
+
 import { globalFilterStoreAtom } from './globalFilterStateAtom';
 import { FilterKeyPropType, UseGlobalFilterStateReturn } from './types';
 

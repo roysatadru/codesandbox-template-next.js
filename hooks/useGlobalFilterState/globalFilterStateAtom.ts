@@ -1,6 +1,7 @@
 import { PrimitiveAtom } from 'jotai';
 import { atomWithStore } from 'jotai/zustand';
 import create from 'zustand/vanilla';
+
 import { MiddlewareHookReturnType, UseGlobalFilterStateReturn } from './types';
 
 export const globalFilterStore = create(

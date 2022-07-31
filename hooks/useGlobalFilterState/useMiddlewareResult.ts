@@ -1,6 +1,7 @@
 import { UseQueryResult } from '@tanstack/react-query';
 import { selectAtom, useAtomValue } from 'jotai/utils';
 import { FieldValues } from 'react-hook-form';
+
 import { globalFilterStoreAtom } from './globalFilterStateAtom';
 import { FilterKeyPropType, MiddlewareHookReturnType } from './types';
 

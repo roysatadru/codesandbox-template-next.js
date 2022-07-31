@@ -1,4 +1,5 @@
 import { UseQueryResult } from '@tanstack/react-query';
+import { WritableDraft } from 'immer/dist/internal';
 import { FieldValues, UseFormProps, UseFormReturn } from 'react-hook-form';
 
 export type MiddlewareHookReturnType<
@@ -52,6 +53,13 @@ export type SyncValues<
       MiddlewareType,
       MiddlewareOtherReturnType
     >;
+    onChangeFormValueStates?: (values: TFieldValues, draftLocation: WritableDraft<{
+      pathname: string;
+      hash: string;
+      queryParams: {
+        [k: string]: string;
+      };
+    }>) => void;
   };
 
 export type FilterKeyPropType = string;

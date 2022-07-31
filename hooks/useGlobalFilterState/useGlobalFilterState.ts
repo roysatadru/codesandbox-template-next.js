@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from '@tanstack/react-query';
 import { FieldValues, Path, useForm } from 'react-hook-form';
 import { isEqual } from 'lodash-es';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
+import produce from 'immer';
 
 import { globalFilterStore } from './globalFilterStateAtom';
 import {
@@ -10,7 +12,6 @@ import {
   SyncValuePropType,
   UseGlobalFilterStateReturn,
 } from './types';
-import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 export const useGlobalFilterState = <
   TFieldValues extends FieldValues = FieldValues,
@@ -36,13 +37,21 @@ export const useGlobalFilterState = <
     stopSync = false,
     useMiddleware,
     middlewareType = 'sync',
+    onChangeFormValueStates,
   } = syncValueProps;
+
+  const memoizedOnChangeFormValueStates = useRef(
+    onChangeFormValueStates,
+  ).current;
 
   const methods = useForm<TFieldValues, TContext>(
     hookFormProps,
   ) as UseGlobalFilterStateReturn<TFieldValues, TContext>;
 
   const { getValues, reset, watch } = methods;
+
+  const watchedValues =
+    typeof memoizedOnChangeFormValueStates === 'function' && watch();
 
   const setAllValues = useCallback((values: TFieldValues) => {
     reset(values);
@@ -137,6 +146,28 @@ export const useGlobalFilterState = <
     setAllValues,
     status,
   ]);
+
+  useEffect(() => {
+    if (watchedValues !== false) {
+      const { pathname, hash, search, origin } = window.location;
+      const queryParams = Object.fromEntries(
+        Array.from(new URLSearchParams(search).entries()),
+      );
+
+      const presentLocation = { origin, pathname, hash, queryParams };
+
+      const newLocation = produce(presentLocation, draftState => {
+        memoizedOnChangeFormValueStates?.(watchedValues, draftState);
+      });
+
+      if (presentLocation !== newLocation) {
+        window.location.href = `${newLocation.origin}${newLocation.pathname
+          }?${Object.entries(newLocation.queryParams).map(
+            ([key, value], index) => `${index === 0 ? '' : '&'}${key}=${value}`,
+          )}${newLocation.hash}`;
+      }
+    }
+  }, [memoizedOnChangeFormValueStates, watchedValues]);
 
   const [hookFormMethods] = useState(() => {
     let _hookFormMethods = globalFilterStore.getState();

@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
+import produce from 'immer'
 import type { NextPage } from 'next'
 import { useRouter } from 'next/router'
+import { useEffect } from 'react'
 
 import { useGlobalFilterState } from '../hooks/useGlobalFilterState'
 
@@ -26,6 +28,18 @@ const Home: NextPage = () => {
   console.log({ data, status, fetchStatus })
 
   console.log(watch())
+
+  useEffect(() => {
+    const lame = {
+      a: 'a'
+    }
+
+    const newLame = produce(lame, (d) => {
+      d.a = 'b'
+    })
+
+    console.log(newLame === lame)
+  }, [])
 
   return (
     <div className={styles.container}>
