@@ -1,30 +1,20 @@
 {
-  "filterHashKeys": {
-    "dgfhsjdgfh643hdsfafd": {
+  "filterHashKeys": [
+    {
+      "filterKey": "dgfhsjdgfh643hdsfafd",
       "cars": "mercedes"
     },
-    "dhferjhgfhertjhgygud": {
+    {
+      "filterKey": "dhferjhgfhertjhgygud",
       "cars": "saab"
     },
-    "bsvbdvygdfuydsg78fgv": {
+    {
+      "filterKey": "bsvbdvygdfuydsg78fgv",
       "cars": "volvo"
     },
-    "oopjn67fcghhfvhukkjv": {
+    {
+      "filterKey": "oopjn67fcghhfvhukkjv",
       "cars": "audi"
     }
-  },
-  "cars": {
-    "volvo": {
-      "filterHashKey": "bsvbdvygdfuydsg78fgv"
-    },
-    "saab": {
-      "filterHashKey": "dhferjhgfhertjhgygud"
-    },
-    "mercedes": {
-      "filterHashKey": "dgfhsjdgfh643hdsfafd"
-    },
-    "audi": {
-      "filterHashKey": "oopjn67fcghhfvhukkjv"
-    }
-  }
+  ]
 }
