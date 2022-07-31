@@ -1,6 +1,23 @@
 import { UseQueryResult } from '@tanstack/react-query';
 import { FieldValues, UseFormProps, UseFormReturn } from 'react-hook-form';
 
+export type MiddlewareHookReturnType<
+  TFieldValues extends FieldValues = FieldValues,
+  MiddlewareType extends 'async' | 'sync' = 'sync',
+  MiddlewareOtherReturnType = MiddlewareType extends 'async'
+  ? UseQueryResult<TFieldValues>
+  : {},
+  > = MiddlewareOtherReturnType &
+  (MiddlewareType extends 'async'
+    ? {
+      data: TFieldValues;
+      fetchStatus: UseQueryResult['fetchStatus'];
+      status: UseQueryResult['status'];
+    }
+    : {
+      data: TFieldValues;
+    });
+
 export type UseMiddlewareHook<
   SyncValuesType = unknown,
   TFieldValues extends FieldValues = FieldValues,
@@ -11,16 +28,11 @@ export type UseMiddlewareHook<
   > = (
     values: SyncValuesType | undefined,
     previousFilterState: TFieldValues,
-  ) => MiddlewareOtherReturnType &
-    (MiddlewareType extends 'async'
-      ? {
-        data: TFieldValues;
-        fetchStatus: UseQueryResult['fetchStatus'];
-        status: UseQueryResult['status'];
-      }
-      : {
-        data: TFieldValues;
-      });
+  ) => MiddlewareHookReturnType<
+    TFieldValues,
+    MiddlewareType,
+    MiddlewareOtherReturnType
+  >;
 
 export type SyncValues<
   SyncValuesType = unknown,
@@ -82,20 +94,5 @@ export type UseGlobalFilterStateProps<
 
 export type UseGlobalFilterStateReturn<
   TFieldValues extends FieldValues = FieldValues,
-  TContext = any,
-  MiddlewareType extends 'async' | 'sync' = 'sync',
-  MiddlewareOtherReturnType = MiddlewareType extends 'async'
-  ? UseQueryResult<TFieldValues>
-  : {},
-  > = UseFormReturn<TFieldValues, TContext> & {
-    watchMiddlewareReturnValues: () => MiddlewareOtherReturnType &
-      (MiddlewareType extends 'async'
-        ? {
-          data: TFieldValues;
-          fetchStatus: UseQueryResult['fetchStatus'];
-          status: UseQueryResult['status'];
-        }
-        : {
-          data: TFieldValues;
-        });
-  };
+  TContext = any
+  > = UseFormReturn<TFieldValues, TContext>;

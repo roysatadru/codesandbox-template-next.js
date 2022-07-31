@@ -10,6 +10,7 @@ import {
   SyncValuePropType,
   UseGlobalFilterStateReturn,
 } from './types';
+import { atom, useAtomValue, useSetAtom } from 'jotai';
 
 export const useGlobalFilterState = <
   TFieldValues extends FieldValues = FieldValues,
@@ -17,17 +18,17 @@ export const useGlobalFilterState = <
   SyncValuesType = unknown,
   MiddlewareType extends 'async' | 'sync' = 'sync',
   MiddlewareOtherReturnType = MiddlewareType extends 'async'
-    ? UseQueryResult<TFieldValues>
-    : {},
->(
-  filterKey: FilterKeyPropType,
-  hookFormProps: HookFormPropType<TFieldValues, TContext> = {},
-  syncValueProps: SyncValuePropType<
-    SyncValuesType,
-    TFieldValues,
-    MiddlewareType,
-    MiddlewareOtherReturnType
-  > = {},
+  ? UseQueryResult<TFieldValues>
+  : {},
+  >(
+    filterKey: FilterKeyPropType,
+    hookFormProps: HookFormPropType<TFieldValues, TContext> = {},
+    syncValueProps: SyncValuePropType<
+      SyncValuesType,
+      TFieldValues,
+      MiddlewareType,
+      MiddlewareOtherReturnType
+    > = {},
 ) => {
   const {
     values: notMemoizedValues,
@@ -37,16 +38,14 @@ export const useGlobalFilterState = <
     middlewareType = 'sync',
   } = syncValueProps;
 
-  const reactQueryFormKey = `$$$$${filterKey}-form$$$$`;
+  const methods = useForm<TFieldValues, TContext>(
+    hookFormProps,
+  ) as UseGlobalFilterStateReturn<TFieldValues, TContext>;
 
-  const methods = useForm<TFieldValues, TContext>(hookFormProps);
+  const { getValues, reset, watch } = methods;
 
-  const { getValues, setValue, watch } = methods;
-
-  const setAllValues = useCallback((values: FieldValues) => {
-    Object.keys(values).forEach(key => {
-      setValue(key as Path<TFieldValues>, values[key]);
-    });
+  const setAllValues = useCallback((values: TFieldValues) => {
+    reset(values);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -95,7 +94,7 @@ export const useGlobalFilterState = <
     if (
       memoizedMiddlewareResultRef.current.data === memoizedConvertedData &&
       Object.keys(restMiddlewareResult).length ===
-        Object.keys(memoizedMiddlewareResultRef.current).length - 1 &&
+      Object.keys(memoizedMiddlewareResultRef.current).length - 1 &&
       Object.entries(restMiddlewareResult).every(
         ([key, value]) =>
           value === (memoizedMiddlewareResultRef.current as any)?.[key as any],
@@ -108,6 +107,7 @@ export const useGlobalFilterState = <
       data: memoizedConvertedData,
       ...restMiddlewareResult,
     };
+    return memoizedMiddlewareResultRef.current;
   }, [memoizedConvertedData, restMiddlewareResult]);
 
   let { fetchStatus, status } = {
@@ -123,15 +123,6 @@ export const useGlobalFilterState = <
     fetchStatus = networkStatus.fetchStatus;
     status = networkStatus.status;
   }
-
-  useEffect(() => {
-    setValue(reactQueryFormKey as any, memoizedMiddlewareResult as any, {
-      shouldValidate: false,
-      shouldDirty: false,
-      shouldTouch: false,
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [memoizedMiddlewareResult]);
 
   useEffect(() => {
     if (middlewareType === 'sync') {
@@ -152,11 +143,11 @@ export const useGlobalFilterState = <
 
     if (!_hookFormMethods[filterKey]) {
       globalFilterStore.setState({
-        ..._hookFormMethods,
+        ...(_hookFormMethods as any),
         [filterKey]: {
-          ...methods,
-          watchMiddlewareReturnValues: () => watch(reactQueryFormKey as any),
-        } as any,
+          methods: atom(methods),
+          middlewareReturnAtom: atom(memoizedMiddlewareResult),
+        },
       });
       _hookFormMethods = globalFilterStore.getState();
     }
@@ -164,10 +155,20 @@ export const useGlobalFilterState = <
     return _hookFormMethods[filterKey];
   });
 
-  return hookFormMethods as UseGlobalFilterStateReturn<
-    TFieldValues,
-    TContext,
-    MiddlewareType,
-    MiddlewareOtherReturnType
-  >;
+  const setHookFormMethods = useSetAtom(hookFormMethods.methods);
+  const formMethods = useAtomValue(hookFormMethods.methods);
+
+  const setGlobalMiddlewareResult = useSetAtom(
+    hookFormMethods.middlewareReturnAtom,
+  );
+
+  useEffect(() => {
+    setGlobalMiddlewareResult(memoizedMiddlewareResult);
+  }, [memoizedMiddlewareResult, setGlobalMiddlewareResult]);
+
+  useEffect(() => {
+    setHookFormMethods(methods as any);
+  }, [methods, setHookFormMethods]);
+
+  return formMethods as UseGlobalFilterStateReturn<TFieldValues, TContext>;
 };
