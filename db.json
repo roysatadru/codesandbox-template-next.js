@@ -1,0 +1,30 @@
+{
+  "filterHashKeys": {
+    "dgfhsjdgfh643hdsfafd": {
+      "cars": "mercedes",
+    },
+    "dhferjhgfhertjhgygud": {
+      "cars": "saab",
+    },
+    "bsvbdvygdfuydsg78fgv": {
+      "cars": "volvo",
+    },
+    "oopjn67fcghhfvhukkjv": {
+      "cars": "audi",
+    }
+  },
+  "cars": {
+    "volvo": {
+      "filterHashKey": "bsvbdvygdfuydsg78fgv",
+    },
+    "saab": {
+      "filterHashKey": "dhferjhgfhertjhgygud",
+    },
+    "mercedes": {
+      "filterHashKey": "dgfhsjdgfh643hdsfafd",
+    },
+    "audi": {
+      "filterHashKey": "oopjn67fcghhfvhukkjv",
+    }
+  }
+}
