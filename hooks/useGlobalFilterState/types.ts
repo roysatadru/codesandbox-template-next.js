@@ -4,60 +4,98 @@ import { FieldValues, UseFormProps, UseFormReturn } from 'react-hook-form';
 export type UseMiddlewareHook<
   SyncValuesType = unknown,
   TFieldValues extends FieldValues = FieldValues,
-  UseAsyncMiddlewareOtherReturnType = UseQueryResult<TFieldValues>,
-  UseMiddlewareOtherReturnType = {},
+  MiddlewareType extends 'async' | 'sync' = 'sync',
+  MiddlewareOtherReturnType = MiddlewareType extends 'async'
+  ? UseQueryResult<TFieldValues>
+  : {},
   > = (
     values: SyncValuesType | undefined,
     previousFilterState: TFieldValues,
-  ) => UseMiddlewareOtherReturnType &
-    (
-      | (UseAsyncMiddlewareOtherReturnType & {
-        middlewareType: 'async';
+  ) => MiddlewareOtherReturnType &
+    (MiddlewareType extends 'async'
+      ? {
         data: TFieldValues;
         fetchStatus: UseQueryResult['fetchStatus'];
         status: UseQueryResult['status'];
-      })
-      | {
-        middlewareType?: 'sync';
-        data: TFieldValues;
       }
-    );
+      : {
+        data: TFieldValues;
+      });
 
 export type SyncValues<
   SyncValuesType = unknown,
   TFieldValues extends FieldValues = FieldValues,
-  UseAsyncMiddlewareOtherReturnType = UseQueryResult<TFieldValues>,
-  UseMiddlewareOtherReturnType = { [others: string | number]: unknown },
+  MiddlewareType extends 'async' | 'sync' = 'sync',
+  MiddlewareOtherReturnType = MiddlewareType extends 'async'
+  ? UseQueryResult<TFieldValues>
+  : {},
   > = {
     values?: SyncValuesType;
     disableDeepCompare?: boolean;
     stopSync?: boolean;
+    middlewareType?: MiddlewareType;
     useMiddleware?: UseMiddlewareHook<
       SyncValuesType,
       TFieldValues,
-      UseAsyncMiddlewareOtherReturnType,
-      UseMiddlewareOtherReturnType
+      MiddlewareType,
+      MiddlewareOtherReturnType
     >;
   };
+
+export type FilterKeyPropType = string;
+export type HookFormPropType<
+  TFieldValues extends FieldValues = FieldValues,
+  TContext = any,
+  > = UseFormProps<TFieldValues, TContext>;
+export type SyncValuePropType<
+  SyncValuesType = unknown,
+  TFieldValues extends FieldValues = FieldValues,
+  MiddlewareType extends 'async' | 'sync' = 'sync',
+  MiddlewareOtherReturnType = MiddlewareType extends 'async'
+  ? UseQueryResult<TFieldValues>
+  : {},
+  > = SyncValues<
+    SyncValuesType,
+    TFieldValues,
+    MiddlewareType,
+    MiddlewareOtherReturnType
+  >;
 
 export type UseGlobalFilterStateProps<
   TFieldValues extends FieldValues = FieldValues,
   TContext = any,
   SyncValuesType = unknown,
-  UseAsyncMiddlewareOtherReturnType = UseQueryResult<TFieldValues>,
-  UseMiddlewareOtherReturnType = { [others: string | number]: unknown },
+  MiddlewareType extends 'async' | 'sync' = 'sync',
+  MiddlewareOtherReturnType = MiddlewareType extends 'async'
+  ? UseQueryResult<TFieldValues>
+  : {},
   > = [
-    string,
-    UseFormProps<TFieldValues, TContext>?,
-    SyncValues<
+    FilterKeyPropType,
+    HookFormPropType<TFieldValues, TContext>?,
+    SyncValuePropType<
       SyncValuesType,
       TFieldValues,
-      UseAsyncMiddlewareOtherReturnType,
-      UseMiddlewareOtherReturnType
+      MiddlewareType,
+      MiddlewareOtherReturnType
     >?,
   ];
 
 export type UseGlobalFilterStateReturn<
   TFieldValues extends FieldValues = FieldValues,
   TContext = any,
-  > = UseFormReturn<TFieldValues, TContext>;
+  MiddlewareType extends 'async' | 'sync' = 'sync',
+  MiddlewareOtherReturnType = MiddlewareType extends 'async'
+  ? UseQueryResult<TFieldValues>
+  : {},
+  > = UseFormReturn<TFieldValues, TContext> & {
+    watchMiddlewareReturnValues: () => MiddlewareOtherReturnType &
+      (MiddlewareType extends 'async'
+        ? {
+          data: TFieldValues;
+          fetchStatus: UseQueryResult['fetchStatus'];
+          status: UseQueryResult['status'];
+        }
+        : {
+          data: TFieldValues;
+        });
+  };
