@@ -53,13 +53,25 @@ export type SyncValues<
       MiddlewareType,
       MiddlewareOtherReturnType
     >;
-    onChangeFormValueStates?: (values: TFieldValues, draftLocation: WritableDraft<{
-      pathname: string;
-      hash: string;
-      queryParams: {
-        [k: string]: string;
-      };
-    }>) => void;
+    afterMiddlewareConversion?: (
+      params?: Pick<
+        UseGlobalFilterStateReturn<TFieldValues, any>,
+        | 'clearErrors'
+        | 'getFieldState'
+        | 'getValues'
+        | 'reset'
+        | 'resetField'
+        | 'setError'
+        | 'setFocus'
+        | 'setValue'
+        | 'trigger'
+      > & {
+        middlewareReturn: TFieldValues;
+      },
+    ) => void;
+    onChangeFormValueStates?: (
+      values: TFieldValues,
+    ) => void | Promise<void>;
   };
 
 export type FilterKeyPropType = string;
@@ -102,5 +114,5 @@ export type UseGlobalFilterStateProps<
 
 export type UseGlobalFilterStateReturn<
   TFieldValues extends FieldValues = FieldValues,
-  TContext = any
+  TContext = any,
   > = UseFormReturn<TFieldValues, TContext>;

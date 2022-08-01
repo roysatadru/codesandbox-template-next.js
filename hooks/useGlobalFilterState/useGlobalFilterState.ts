@@ -19,17 +19,17 @@ export const useGlobalFilterState = <
   SyncValuesType = unknown,
   MiddlewareType extends 'async' | 'sync' = 'sync',
   MiddlewareOtherReturnType = MiddlewareType extends 'async'
-  ? UseQueryResult<TFieldValues>
-  : {},
-  >(
-    filterKey: FilterKeyPropType,
-    hookFormProps: HookFormPropType<TFieldValues, TContext> = {},
-    syncValueProps: SyncValuePropType<
-      SyncValuesType,
-      TFieldValues,
-      MiddlewareType,
-      MiddlewareOtherReturnType
-    > = {},
+    ? UseQueryResult<TFieldValues>
+    : {},
+>(
+  filterKey: FilterKeyPropType,
+  hookFormProps: HookFormPropType<TFieldValues, TContext> = {},
+  syncValueProps: SyncValuePropType<
+    SyncValuesType,
+    TFieldValues,
+    MiddlewareType,
+    MiddlewareOtherReturnType
+  > = {},
 ) => {
   const {
     values: notMemoizedValues,
@@ -38,23 +38,51 @@ export const useGlobalFilterState = <
     useMiddleware,
     middlewareType = 'sync',
     onChangeFormValueStates,
+    afterMiddlewareConversion,
   } = syncValueProps;
 
-  const memoizedOnChangeFormValueStates = useRef(
-    onChangeFormValueStates,
-  ).current;
+  const memoizedOnChangeFormValueStatesRef = useRef(onChangeFormValueStates);
+  const afterMiddlewareConversionRef = useRef(afterMiddlewareConversion);
+  memoizedOnChangeFormValueStatesRef.current = onChangeFormValueStates;
+  afterMiddlewareConversionRef.current = afterMiddlewareConversion;
 
   const methods = useForm<TFieldValues, TContext>(
     hookFormProps,
   ) as UseGlobalFilterStateReturn<TFieldValues, TContext>;
 
-  const { getValues, reset, watch } = methods;
+  const { getValues, reset: resetFormFields, watch } = methods;
 
   const watchedValues =
-    typeof memoizedOnChangeFormValueStates === 'function' && watch();
+    typeof memoizedOnChangeFormValueStatesRef.current === 'function' && watch();
 
   const setAllValues = useCallback((values: TFieldValues) => {
-    reset(values);
+    if (typeof afterMiddlewareConversionRef.current === 'function') {
+      const {
+        clearErrors,
+        getFieldState,
+        getValues,
+        reset,
+        resetField,
+        setError,
+        setFocus,
+        setValue,
+        trigger,
+      } = methods;
+      afterMiddlewareConversionRef.current({
+        middlewareReturn: values,
+        clearErrors,
+        getFieldState,
+        getValues,
+        reset,
+        resetField,
+        setError,
+        setFocus,
+        setValue,
+        trigger,
+      });
+    } else {
+      resetFormFields(values);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -103,7 +131,7 @@ export const useGlobalFilterState = <
     if (
       memoizedMiddlewareResultRef.current.data === memoizedConvertedData &&
       Object.keys(restMiddlewareResult).length ===
-      Object.keys(memoizedMiddlewareResultRef.current).length - 1 &&
+        Object.keys(memoizedMiddlewareResultRef.current).length - 1 &&
       Object.entries(restMiddlewareResult).every(
         ([key, value]) =>
           value === (memoizedMiddlewareResultRef.current as any)?.[key as any],
@@ -149,25 +177,9 @@ export const useGlobalFilterState = <
 
   useEffect(() => {
     if (watchedValues !== false) {
-      const { pathname, hash, search, origin } = window.location;
-      const queryParams = Object.fromEntries(
-        Array.from(new URLSearchParams(search).entries()),
-      );
-
-      const presentLocation = { origin, pathname, hash, queryParams };
-
-      const newLocation = produce(presentLocation, draftState => {
-        memoizedOnChangeFormValueStates?.(watchedValues, draftState);
-      });
-
-      if (presentLocation !== newLocation) {
-        window.location.href = `${newLocation.origin}${newLocation.pathname
-          }?${Object.entries(newLocation.queryParams).map(
-            ([key, value], index) => `${index === 0 ? '' : '&'}${key}=${value}`,
-          )}${newLocation.hash}`;
-      }
+      memoizedOnChangeFormValueStatesRef.current?.(watchedValues);
     }
-  }, [memoizedOnChangeFormValueStates, watchedValues]);
+  }, [watchedValues]);
 
   const [hookFormMethods] = useState(() => {
     let _hookFormMethods = globalFilterStore.getState();

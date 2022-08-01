@@ -1,0 +1,1 @@
+export { useSelectSearchParamsRouter } from './useSelectSearchParamsRouter';
