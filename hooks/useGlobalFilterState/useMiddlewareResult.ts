@@ -1,4 +1,5 @@
 import { UseQueryResult } from '@tanstack/react-query';
+import { atom } from 'jotai';
 import { selectAtom, useAtomValue } from 'jotai/utils';
 import { FieldValues } from 'react-hook-form';
 
@@ -15,8 +16,9 @@ export const useMiddlewareResult = <
   filterKey: FilterKeyPropType,
 ) => {
   return useAtomValue(
-    useAtomValue(selectAtom(globalFilterStoreAtom, s => s?.[filterKey]))
-      ?.middlewareReturnAtom,
+    useAtomValue(
+      selectAtom(globalFilterStoreAtom, s => s?.[filterKey]) ?? atom({}),
+    )?.middlewareReturnAtom ?? atom({}),
   ) as MiddlewareHookReturnType<
     TFieldValues,
     MiddlewareType,

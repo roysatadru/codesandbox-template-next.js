@@ -1,4 +1,4 @@
-import { useAtomValue } from 'jotai';
+import { atom, useAtomValue } from 'jotai';
 import { selectAtom } from 'jotai/utils';
 import { FieldValues } from 'react-hook-form';
 
@@ -12,7 +12,7 @@ export const useGlobalFilterStateSelector = <
   filterKey: FilterKeyPropType,
 ) => {
   return useAtomValue(
-    useAtomValue(selectAtom(globalFilterStoreAtom, s => s?.[filterKey]))
-      ?.methods,
+    useAtomValue(selectAtom(globalFilterStoreAtom, s => s?.[filterKey]) ?? atom({}))
+      ?.methods ?? atom({}),
   ) as UseGlobalFilterStateReturn<TFieldValues, TContext>;
 };

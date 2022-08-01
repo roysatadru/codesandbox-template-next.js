@@ -1,5 +1,5 @@
 import produce, { Draft, Immutable } from 'immer';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useFreezedRouter } from '../useFreezedRouter';
 import {
@@ -7,6 +7,7 @@ import {
   ProduceRecipeFn,
   RouteEventsHandlers,
   SearchParamsType,
+  UseSelectSearchParamsRouterReturn,
 } from './types';
 import {
   convertToSearchString,
@@ -104,82 +105,97 @@ export const useSelectSearchParamsRouter = <T extends string>(
     }
   }, [events, getCurrentNextRouter]);
 
+  const generateNewRoute = useCallback(
+    (
+      recipe:
+        | ProduceRecipeFn<SearchParamsType<T[]>>
+        | PartialSearchParamsType<T[]>,
+    ) => {
+      const _rest = getCurrentNextRouter();
+
+      let updatedParams = {} as SearchParamsType<T[]>;
+
+      if (typeof recipe === 'function') {
+        const presentSelectedSearchParams = generateSearchParams(_rest.asPath, {
+          select: watchSearchParamKeysRef.current,
+        });
+
+        updatedParams = produce(recipe)(
+          presentSelectedSearchParams as Immutable<
+            Draft<SearchParamsType<T[]>>
+          >,
+        ) as any;
+      } else {
+        updatedParams = recipe as any;
+      }
+
+      return {
+        ...getCommonsRouteProps(_rest),
+        search: convertToSearchString(
+          replaceQueryParams(watchSearchParamKeysRef.current)(
+            generateSearchParams(_rest.asPath),
+            () => {
+              return updatedParams as any;
+            },
+          ),
+        ),
+      };
+    },
+    [getCurrentNextRouter],
+  );
+
   return useMemo(
-    () => ({
-      pushSearchParams(
-        recipe:
-          | ProduceRecipeFn<SearchParamsType<T[]>>
-          | PartialSearchParamsType<T[]>,
-      ) {
-        const _rest = getCurrentNextRouter();
+    () =>
+      ({
+        pushSearchParams(
+          recipe:
+            | ProduceRecipeFn<SearchParamsType<T[]>>
+            | PartialSearchParamsType<T[]>,
+        ) {
+          return push(generateNewRoute(recipe));
+        },
+        replaceSearchParams(
+          recipe:
+            | ProduceRecipeFn<SearchParamsType<T[]>>
+            | PartialSearchParamsType<T[]>,
+        ) {
+          return replace(generateNewRoute(recipe));
+        },
+        clearSearchParams(
+          searchParamsClearProps: { replace?: boolean; keys?: T[] } = {},
+        ) {
+          const { replace: routeReplace, keys: clearKeys } =
+            searchParamsClearProps;
+          const _rest = getCurrentNextRouter();
 
-        let updatedParams = {} as SearchParamsType<T[]>;
-        
-        if (typeof recipe === 'function') {
-          const presentSelectedSearchParams = generateSearchParams(_rest.asPath, {
-            select: watchSearchParamKeysRef.current,
-          });
-
-          updatedParams = produce(recipe)(
-            presentSelectedSearchParams as Immutable<
-              Draft<SearchParamsType<T[]>>
-            >,
-          ) as any;
-        } else {
-          updatedParams = recipe as any;
-        }
-
-        const newRoute = {
-          ...getCommonsRouteProps(_rest),
-          search: convertToSearchString(
-            replaceQueryParams(watchSearchParamKeysRef.current)(
-              generateSearchParams(_rest.asPath),
-              () => {
-                return updatedParams as any
-              },
+          const newRoute = {
+            ...getCommonsRouteProps(_rest),
+            search: convertToSearchString(
+              replaceQueryParams(watchSearchParamKeysRef.current)(
+                generateSearchParams(_rest.asPath),
+                (_, clearParams) => {
+                  return clearParams(clearKeys);
+                },
+              ),
             ),
-          ),
-        };
+          };
 
-        return push(newRoute);
-      },
-      // replaceSearchParams() {
-      //   return replace();
-      // },
-      clearSearchParams(
-        searchParamsClearProps: { replace?: boolean; keys?: T[] } = {},
-      ) {
-        const { replace: routeReplace, keys: clearKeys } =
-          searchParamsClearProps;
-        const _rest = getCurrentNextRouter();
+          if (routeReplace) {
+            return replace(newRoute);
+          }
 
-        const newRoute = {
-          ...getCommonsRouteProps(_rest),
-          search: convertToSearchString(
-            replaceQueryParams(watchSearchParamKeysRef.current)(
-              generateSearchParams(_rest.asPath),
-              (_, clearParams) => {
-                return clearParams(clearKeys);
-              },
-            ),
-          ),
-        };
-
-        if (routeReplace) {
-          return replace(newRoute);
-        }
-
-        return push(newRoute);
-      },
-      back,
-      reload,
-      beforePopState,
-      prefetch,
-      searchParams: searchParams as PartialSearchParamsType<T[]>,
-    }),
+          return push(newRoute);
+        },
+        back,
+        reload,
+        beforePopState,
+        prefetch,
+        searchParams: searchParams as PartialSearchParamsType<T[]>,
+      } as UseSelectSearchParamsRouterReturn<T>),
     [
       back,
       beforePopState,
+      generateNewRoute,
       getCurrentNextRouter,
       prefetch,
       push,

@@ -1,5 +1,6 @@
 import { Draft, IProduce, PatchListener } from 'immer/dist/internal';
 import { MittEmitter } from 'next/dist/shared/lib/mitt';
+import { NextRouter } from 'next/router';
 
 export type RouteEventsHandlers = Parameters<
   MittEmitter<'routeChangeComplete'>['on']
@@ -48,3 +49,24 @@ export type Produce<Base, D = Draft<Base>> = (
   recipe: ProduceRecipe<D>,
   listener?: PatchListener,
 ) => Base;
+
+export type UseSelectSearchParamsRouterReturn<T extends string = string> = Pick<
+  NextRouter,
+  'back' | 'reload' | 'beforePopState' | 'prefetch'
+> & {
+  searchParams: PartialSearchParamsType<T[]>;
+  clearSearchParams: (searchParamsClearProps?: {
+    replace?: boolean | undefined;
+    keys?: T[] | undefined;
+  }) => Promise<boolean>;
+  pushSearchParams: (
+    recipe:
+      | ProduceRecipeFn<SearchParamsType<T[]>>
+      | PartialSearchParamsType<T[]>,
+  ) => Promise<boolean>;
+  replaceSearchParams: (
+    recipe:
+      | ProduceRecipeFn<SearchParamsType<T[]>>
+      | PartialSearchParamsType<T[]>,
+  ) => Promise<boolean>;
+};
