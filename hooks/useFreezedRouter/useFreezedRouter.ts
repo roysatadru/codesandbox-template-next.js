@@ -1,4 +1,4 @@
-import router, { makePublicRouterInstance, Router } from 'next/router';
+import router from 'next/router';
 import { useEffect, useMemo } from 'react';
 
 import { useRouterInstance, useSetRouterInstance } from './routerAtom';
@@ -10,7 +10,7 @@ export const useFreezedRouter = () => {
 
   useEffect(() => {
     if (!Object.entries(routerInstance).length) {
-      setRouterInstance(makePublicRouterInstance(router.router as Router));
+      setRouterInstance(router);
     }
   }, [routerInstance, setRouterInstance]);
 
@@ -18,7 +18,7 @@ export const useFreezedRouter = () => {
     return {
       ...routerInstance,
       getCurrentNextRouter: () =>
-        makePublicRouterInstance(router.router as Router),
+        router,
     };
   }, [routerInstance]) as UseFreezedRouterReturn;
 };
