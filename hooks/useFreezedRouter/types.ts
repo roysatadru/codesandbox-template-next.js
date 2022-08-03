@@ -1,4 +1,4 @@
-import { NextRouter, Router } from 'next/router';
+import { NextRouter } from 'next/router';
 
 type MethodParams =
   | 'push'
