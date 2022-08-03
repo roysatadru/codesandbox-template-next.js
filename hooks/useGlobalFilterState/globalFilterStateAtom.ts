@@ -2,7 +2,12 @@ import { PrimitiveAtom } from 'jotai';
 import { atomWithStore } from 'jotai/zustand';
 import create from 'zustand/vanilla';
 
-import { MiddlewareHookReturnType, UseGlobalFilterStateReturn } from './types';
+import {
+  DefaultOnChangeExtendedStates,
+  MiddlewareHookReturnType,
+  OnChangeExtendedStatesAtom,
+  UseGlobalFilterStateReturn,
+} from './types';
 
 export const globalFilterStore = create(
   () =>
@@ -14,6 +19,7 @@ export const globalFilterStore = create(
         middlewareReturnAtom: PrimitiveAtom<MiddlewareHookReturnType> & {
           init: UseGlobalFilterStateReturn;
         };
+        onChangeExtendedStatesAtom: OnChangeExtendedStatesAtom<DefaultOnChangeExtendedStates>;
       };
     }),
 );

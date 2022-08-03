@@ -5,25 +5,32 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx}\""
   },
   "dependencies": {
+    "@emotion/react": "^11.10.0",
+    "@emotion/server": "^11.10.0",
+    "@mantine/core": "^5.0.2",
+    "@mantine/hooks": "^5.0.2",
+    "@mantine/next": "^5.0.2",
     "@tanstack/react-query": "^4.0.10",
     "immer": "^9.0.15",
-    "jotai": "^1.7.6",
+    "jotai": "^1.7.7",
     "lodash-es": "^4.17.21",
-    "next": "12.0.9",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
+    "next": "12.2.3",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "react-hook-form": "^7.34.0",
     "zustand": "^4.0.0"
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.6",
-    "@types/node": "17.0.12",
-    "@types/react": "17.0.38",
-    "eslint": "8.7.0",
-    "eslint-config-next": "12.0.9",
-    "typescript": "4.5.5"
+    "@types/node": "18.6.3",
+    "@types/react": "18.0.15",
+    "eslint": "8.21.0",
+    "eslint-config-next": "12.2.3",
+    "prettier": "^2.7.1",
+    "typescript": "4.7.4"
   }
 }

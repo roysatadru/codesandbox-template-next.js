@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { UseQueryResult } from '@tanstack/react-query';
-import { FieldValues, Path, useForm } from 'react-hook-form';
+import { FieldValues, useForm } from 'react-hook-form';
 import { isEqual } from 'lodash-es';
 import { atom, useAtomValue, useSetAtom } from 'jotai';
-import produce from 'immer';
+import { atomWithImmer } from 'jotai/immer';
 
 import { globalFilterStore } from './globalFilterStateAtom';
 import {
+  DefaultOnChangeExtendedStates,
   FilterKeyPropType,
   HookFormPropType,
   SyncValuePropType,
@@ -21,6 +22,7 @@ export const useGlobalFilterState = <
   MiddlewareOtherReturnType = MiddlewareType extends 'async'
     ? UseQueryResult<TFieldValues>
     : {},
+  OnChangeExtendedStates extends DefaultOnChangeExtendedStates = DefaultOnChangeExtendedStates,
 >(
   filterKey: FilterKeyPropType,
   hookFormProps: HookFormPropType<TFieldValues, TContext> = {},
@@ -28,7 +30,8 @@ export const useGlobalFilterState = <
     SyncValuesType,
     TFieldValues,
     MiddlewareType,
-    MiddlewareOtherReturnType
+    MiddlewareOtherReturnType,
+    OnChangeExtendedStates
   > = {},
 ) => {
   const {
@@ -175,12 +178,6 @@ export const useGlobalFilterState = <
     status,
   ]);
 
-  useEffect(() => {
-    if (watchedValues !== false) {
-      memoizedOnChangeFormValueStatesRef.current?.(watchedValues);
-    }
-  }, [watchedValues]);
-
   const [hookFormMethods] = useState(() => {
     let _hookFormMethods = globalFilterStore.getState();
 
@@ -190,6 +187,9 @@ export const useGlobalFilterState = <
         [filterKey]: {
           methods: atom(methods),
           middlewareReturnAtom: atom(memoizedMiddlewareResult),
+          onChangeExtendedStatesAtom: atomWithImmer<OnChangeExtendedStates>(
+            {} as any,
+          ),
         },
       });
       _hookFormMethods = globalFilterStore.getState();
@@ -204,6 +204,19 @@ export const useGlobalFilterState = <
   const setGlobalMiddlewareResult = useSetAtom(
     hookFormMethods.middlewareReturnAtom,
   );
+
+  const setOnChangeExtendedStates = useSetAtom(
+    hookFormMethods.onChangeExtendedStatesAtom,
+  );
+
+  useEffect(() => {
+    if (watchedValues !== false) {
+      memoizedOnChangeFormValueStatesRef.current?.(
+        watchedValues,
+        setOnChangeExtendedStates as any,
+      );
+    }
+  }, [setOnChangeExtendedStates, watchedValues]);
 
   useEffect(() => {
     setGlobalMiddlewareResult(memoizedMiddlewareResult);

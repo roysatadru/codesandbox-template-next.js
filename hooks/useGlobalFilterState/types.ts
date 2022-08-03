@@ -1,5 +1,5 @@
 import { UseQueryResult } from '@tanstack/react-query';
-import { WritableDraft } from 'immer/dist/internal';
+import { WritableAtom } from 'jotai';
 import {
   DeepPartial,
   FieldPath,
@@ -46,6 +46,14 @@ export type UseMiddlewareHook<
   MiddlewareOtherReturnType
 >;
 
+export type SetOnChangeExtendedStates<
+  OnChangeExtendedStates extends DefaultOnChangeExtendedStates = DefaultOnChangeExtendedStates,
+> = {
+  (
+    update: OnChangeExtendedStates | ((draft: OnChangeExtendedStates) => void),
+  ): void;
+};
+
 export type SyncValues<
   SyncValuesType = unknown,
   TFieldValues extends FieldValues = FieldValues,
@@ -53,6 +61,7 @@ export type SyncValues<
   MiddlewareOtherReturnType = MiddlewareType extends 'async'
     ? UseQueryResult<TFieldValues>
     : {},
+  OnChangeExtendedStates extends DefaultOnChangeExtendedStates = DefaultOnChangeExtendedStates,
 > = {
   values?: SyncValuesType;
   disableDeepCompare?: boolean;
@@ -80,7 +89,10 @@ export type SyncValues<
       middlewareReturn: TFieldValues;
     },
   ) => void;
-  onChangeFormValueStates?: (values: TFieldValues) => void | Promise<void>;
+  onChangeFormValueStates?: (
+    values: TFieldValues,
+    setOnChangeExtendedStates: SetOnChangeExtendedStates<OnChangeExtendedStates>,
+  ) => void | Promise<void>;
 };
 
 export type FilterKeyPropType = string;
@@ -95,11 +107,13 @@ export type SyncValuePropType<
   MiddlewareOtherReturnType = MiddlewareType extends 'async'
     ? UseQueryResult<TFieldValues>
     : {},
+  OnChangeExtendedStates extends DefaultOnChangeExtendedStates = DefaultOnChangeExtendedStates,
 > = SyncValues<
   SyncValuesType,
   TFieldValues,
   MiddlewareType,
-  MiddlewareOtherReturnType
+  MiddlewareOtherReturnType,
+  OnChangeExtendedStates
 >;
 
 export type UseGlobalFilterStateProps<
@@ -126,53 +140,114 @@ export type UseGlobalFilterStateReturn<
   TContext = any,
 > = UseFormReturn<TFieldValues, TContext>;
 
-type UseWatch<TFieldValues extends FieldValues = FieldValues> = {
+export type DefaultOnChangeExtendedStates<
+  Value extends {
+    [key: string | number | symbol]: unknown;
+  } = {
+    [key: string | number | symbol]: unknown;
+  },
+> = Value;
+
+export type OnChangeExtendedStatesAtom<Value> = WritableAtom<
+  Value,
+  Value | ((draft: Value) => void),
+  void
+>;
+
+export type UseOnChangeFilterFormStateProps<
+  TFieldValues extends FieldValues = FieldValues,
+  OnChangeExtendedStates extends DefaultOnChangeExtendedStates = DefaultOnChangeExtendedStates,
+> = {
+  (
+    filterKey: FilterKeyPropType,
+    effect?: (
+      fieldPathValues: TFieldValues,
+      setOnChangeExtendedStates: SetOnChangeExtendedStates<OnChangeExtendedStates>,
+    ) => void,
+  ): TFieldValues;
   <TFieldNames extends readonly FieldPath<TFieldValues>[]>(
+    filterKey: FilterKeyPropType,
     names: readonly [...TFieldNames],
     defaultValue?: DeepPartial<TFieldValues>,
+    effect?: (
+      fieldPathValues: FieldPathValues<TFieldValues, TFieldNames>,
+      setOnChangeExtendedStates: SetOnChangeExtendedStates<OnChangeExtendedStates>,
+    ) => void,
   ): FieldPathValues<TFieldValues, TFieldNames>;
   <TFieldName extends FieldPath<TFieldValues>>(
-    name: TFieldName,
+    filterKey: FilterKeyPropType,
+    names: TFieldName,
     defaultValue?: FieldPathValue<TFieldValues, TFieldName>,
+    effect?: (
+      fieldPathValues: FieldPathValue<TFieldValues, TFieldName>,
+      setOnChangeExtendedStates: SetOnChangeExtendedStates<OnChangeExtendedStates>,
+    ) => void,
   ): FieldPathValue<TFieldValues, TFieldName>;
-  (
-    callback: WatchObserver<TFieldValues>,
-    defaultValues?: DeepPartial<TFieldValues>,
-  ): Subscription;
 };
 
-export type UseOnChangeFilterStateRestProps<
-  TFieldValues extends FieldValues = FieldValues,
-  SearchParamsKeys extends string = string,
-> =
-  | [
-      (
-        values: TFieldValues,
-        routerSearchParamState: UseSelectSearchParamsRouterReturn<SearchParamsKeys>,
-      ) => void,
-      SearchParamsKeys[]?,
-    ]
-  | (TFieldValues extends infer V
-      ? V extends TFieldValues
-        ? [
-            Parameters<UseWatch<V>>,
-            (
-              values: ReturnType<UseWatch<V>>,
-              routerSearchParamState: UseSelectSearchParamsRouterReturn<SearchParamsKeys>,
-            ) => void,
-            SearchParamsKeys[]?,
-          ]
-        : [
-            (
-              values: TFieldValues,
-              routerSearchParamState: UseSelectSearchParamsRouterReturn<SearchParamsKeys>,
-            ) => void,
-            SearchParamsKeys[]?,
-          ]
-      : [
-          (
-            values: TFieldValues,
-            routerSearchParamState: UseSelectSearchParamsRouterReturn<SearchParamsKeys>,
-          ) => void,
-          SearchParamsKeys[]?,
-        ]);
+// {
+//   (): TFieldValues;
+//   <TFieldNames extends readonly FieldPath<TFieldValues>[]>(
+//     names: readonly [...TFieldNames],
+//     defaultValue?: DeepPartial<TFieldValues>
+//   ): FieldPathValues<TFieldValues, TFieldNames>;
+//   <TFieldName extends FieldPath<TFieldValues>>(
+//     name: TFieldName,
+//     defaultValue?: FieldPathValue<TFieldValues, TFieldName>
+//   ): FieldPathValue<TFieldValues, TFieldName>;
+//   (
+//     callback: WatchObserver<TFieldValues>,
+//     defaultValues?: DeepPartial<TFieldValues>
+//   ): Subscription;
+// }
+
+// type UseWatch<TFieldValues extends FieldValues = FieldValues> = {
+//   <TFieldNames extends readonly FieldPath<TFieldValues>[]>(
+//     names: readonly [...TFieldNames],
+//     defaultValue?: DeepPartial<TFieldValues>,
+//   ): FieldPathValues<TFieldValues, TFieldNames>;
+//   <TFieldName extends FieldPath<TFieldValues>>(
+//     name: TFieldName,
+//     defaultValue?: FieldPathValue<TFieldValues, TFieldName>,
+//   ): FieldPathValue<TFieldValues, TFieldName>;
+//   (
+//     callback: WatchObserver<TFieldValues>,
+//     defaultValues?: DeepPartial<TFieldValues>,
+//   ): Subscription;
+// };
+
+// export type UseOnChangeFilterStateRestProps<
+//   TFieldValues extends FieldValues = FieldValues,
+//   SearchParamsKeys extends string = string,
+// > =
+//   | [
+//       (
+//         values: TFieldValues,
+//         routerSearchParamState: UseSelectSearchParamsRouterReturn<SearchParamsKeys>,
+//       ) => void,
+//       SearchParamsKeys[]?,
+//     ]
+//   | (TFieldValues extends infer V
+//       ? V extends TFieldValues
+//         ? [
+//             Parameters<UseWatch<V>>,
+//             (
+//               values: ReturnType<UseWatch<V>>,
+//               routerSearchParamState: UseSelectSearchParamsRouterReturn<SearchParamsKeys>,
+//             ) => void,
+//             SearchParamsKeys[]?,
+//           ]
+//         : [
+//             (
+//               values: TFieldValues,
+//               routerSearchParamState: UseSelectSearchParamsRouterReturn<SearchParamsKeys>,
+//             ) => void,
+//             SearchParamsKeys[]?,
+//           ]
+//       : [
+//           (
+//             values: TFieldValues,
+//             routerSearchParamState: UseSelectSearchParamsRouterReturn<SearchParamsKeys>,
+//           ) => void,
+//           SearchParamsKeys[]?,
+//         ]);

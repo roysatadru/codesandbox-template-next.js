@@ -12,7 +12,8 @@ export const useGlobalFilterStateSelector = <
   filterKey: FilterKeyPropType,
 ) => {
   return useAtomValue(
-    useAtomValue(selectAtom(globalFilterStoreAtom, s => s?.[filterKey]) ?? atom({}))
-      ?.methods ?? atom({}),
+    useAtomValue(
+      selectAtom(globalFilterStoreAtom, s => s?.[filterKey]) ?? atom({}),
+    )?.methods ?? atom({}),
   ) as UseGlobalFilterStateReturn<TFieldValues, TContext>;
 };

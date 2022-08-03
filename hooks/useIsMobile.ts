@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 export const useIsMobile = () => {
   const [isSSR, setIsSSR] = useState(true);
@@ -10,8 +10,8 @@ export const useIsMobile = () => {
   const isMobile = isSSR
     ? false
     : navigator.userAgent.match(
-      /Android|webOS|iPhone|iPad|iPod|blackberry|Windows Phone/i,
-    )
+        /Android|webOS|iPhone|iPad|iPod|blackberry|Windows Phone/i,
+      );
 
-  return { isMobile }
-}
+  return { isMobile };
+};

@@ -17,7 +17,8 @@ export const useFreezedRouter = () => {
   return useMemo(() => {
     return {
       ...routerInstance,
-      getCurrentNextRouter: () => makePublicRouterInstance(router.router as Router),
+      getCurrentNextRouter: () =>
+        makePublicRouterInstance(router.router as Router),
     };
   }, [routerInstance]) as UseFreezedRouterReturn;
 };
